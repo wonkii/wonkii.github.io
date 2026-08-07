@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Unreal Engine 5.6와 C++로 구현한 Shooting Action Game의 플레이어 상태, 아이템 상호작용, 성장 시스템 기술 포트폴리오입니다.">
+  <title>Shooting Action Game | Technical Portfolio</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --background: #ffffff;
+      --foreground: #0f172a;
+      --muted: #f1f5f9;
+      --muted-foreground: #64748b;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --primary: #172033;
+      --primary-foreground: #f8fafc;
+      --code-background: #0f172a;
+      --code-foreground: #e2e8f0;
+      --radius: 1rem;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 5rem;
+    }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: "Poppins", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      word-break: keep-all;
+    }
+
+    a { color: inherit; }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(14px);
+    }
+
+    .header-inner,
+    .page-shell {
+      width: min(100% - 2rem, 72rem);
+      margin-inline: auto;
+    }
+
+    .header-inner {
+      min-height: 3.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand,
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      border-radius: 0.5rem;
+      color: var(--foreground);
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      width: 1.85rem;
+      height: 1.85rem;
+      display: grid;
+      place-items: center;
+      border-radius: 0.5rem;
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .back-link {
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--border);
+    }
+
+    .back-link:hover,
+    .toc a:hover { background: var(--muted); }
+
+    .page-shell { padding-block: 4rem 5rem; }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(1.75rem, 5vw, 3.5rem);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) + 0.35rem);
+      background:
+        radial-gradient(circle at 90% 15%, rgba(148, 163, 184, 0.22), transparent 32%),
+        linear-gradient(135deg, #ffffff, #f8fafc);
+      box-shadow: 0 12px 36px rgba(15, 23, 42, 0.06);
+    }
+
+    .eyebrow {
+      margin: 0 0 0.85rem;
+      color: var(--muted-foreground);
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      max-width: 54rem;
+      margin: 0;
+      font-size: clamp(2.15rem, 6vw, 4.75rem);
+      line-height: 1.08;
+      letter-spacing: -0.045em;
+    }
+
+    .hero-copy {
+      max-width: 51rem;
+      margin: 1.4rem 0 0;
+      color: var(--muted-foreground);
+      font-size: clamp(1.08rem, 2vw, 1.2rem);
+      line-height: 1.85;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-top: 1.6rem;
+    }
+
+    .tag {
+      padding: 0.42rem 0.72rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--card);
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .toc {
+      margin-top: 1.5rem;
+      padding: clamp(1.25rem, 3vw, 2rem);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+    }
+
+    .toc-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .toc h1,
+    .toc h2 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+
+    .toc p {
+      margin: 0;
+      color: var(--muted-foreground);
+      font-size: 0.92rem;
+    }
+
+    .toc ol {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.7rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .toc a {
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      text-decoration: none;
+      transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+    }
+
+    .toc a:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
+
+    .toc-number {
+      flex: 0 0 auto;
+      width: 2rem;
+      height: 2rem;
+      display: grid;
+      place-items: center;
+      border-radius: 0.55rem;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .toc-item-title {
+      color: var(--foreground);
+      font-size: 1.04rem;
+      font-weight: 600;
+    }
+
+    .toc-writing-guide {
+      margin-bottom: 1.25rem;
+      padding: 1.3rem;
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+      background: #f8fafc;
+    }
+
+    .toc-writing-guide .writing-guide-copy {
+      margin: 0 0 1.1rem;
+      color: var(--muted-foreground);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    .toc-writing-guide .writing-guide-copy strong {
+      color: var(--foreground);
+    }
+
+    .writing-flow {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .writing-step {
+      position: relative;
+      min-width: 0;
+      padding: 0.85rem;
+      border-radius: 0.65rem;
+      background: var(--card);
+    }
+
+    .writing-step + .writing-step::before {
+      content: "→";
+      position: absolute;
+      top: 50%;
+      left: -0.66rem;
+      color: #94a3b8;
+      font-size: 1rem;
+      font-weight: 700;
+      transform: translateY(-50%);
+    }
+
+    .writing-step strong,
+    .writing-step span {
+      display: block;
+    }
+
+    .writing-step strong {
+      margin-bottom: 0.35rem;
+      color: var(--foreground);
+      font-size: 0.96rem;
+    }
+
+    .writing-step span {
+      color: var(--muted-foreground);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    .document {
+      margin-top: 1.5rem;
+      border: 0;
+      background: transparent;
+    }
+
+    .document-inner {
+      width: 100%;
+      margin-inline: auto;
+      padding: 0;
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .document-inner > section,
+    .document-inner > nav {
+      width: 100%;
+      margin: 0;
+      padding: clamp(2rem, 6vw, 4.5rem);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: 0 10px 32px rgba(15, 23, 42, 0.045);
+    }
+
+    .document-inner > section > *,
+    .document-inner > nav > * {
+      width: min(100%, 54rem);
+      margin-inline: auto;
+    }
+
+    .document-inner > .media-showcase > *,
+    .document-inner > .toc > * {
+      width: 100%;
+    }
+
+    .document .toc {
+      margin: 0;
+      background: var(--card);
+      box-shadow: 0 10px 32px rgba(15, 23, 42, 0.045);
+    }
+
+    .document .toc h1,
+    .document .toc h2 {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      font-size: 1.4rem;
+      letter-spacing: normal;
+    }
+
+    .document .toc p {
+      margin: 0;
+      color: var(--muted-foreground);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .document .toc ol {
+      margin: 0;
+      padding: 0;
+    }
+
+    .document .toc li {
+      margin: 0;
+      color: inherit;
+      font-size: inherit;
+      line-height: normal;
+    }
+
+    .document .lead-quote {
+      margin: 0 0 1.5rem;
+      padding: 1rem 1.2rem;
+      border-left: 4px solid var(--primary);
+      border-radius: 0 0.75rem 0.75rem 0;
+      background: var(--muted);
+      color: #334155;
+    }
+
+    .document .lead-quote p { margin: 0; }
+
+    .media-showcase {
+      margin-top: 0;
+      scroll-margin-top: 5rem;
+    }
+
+    .media-showcase-header {
+      margin-bottom: 1.25rem;
+    }
+
+    .document .media-showcase h2 {
+      margin-bottom: 0.65rem;
+    }
+
+    .media-showcase-header p {
+      margin: 0;
+      color: var(--muted-foreground);
+    }
+
+    .gif-group + .gif-group {
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .document .gif-group-title {
+      margin: 0 0 1rem;
+      font-size: 1.22rem;
+      letter-spacing: -0.02em;
+    }
+
+    .gif-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .gif-card {
+      overflow: hidden;
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: 0.85rem;
+      background: var(--card);
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    .gif-card img {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      display: block;
+      object-fit: cover;
+      background: var(--muted);
+    }
+
+    .gif-card figcaption {
+      padding: 0.9rem 1rem;
+      color: var(--foreground);
+      font-size: 0.98rem;
+      font-weight: 600;
+    }
+
+    .document .chapter {
+      margin-top: 0;
+    }
+
+    .document h2,
+    .document h3,
+    .document h4 { scroll-margin-top: 5rem; }
+
+    .document h2 {
+      margin: 0 0 1.5rem;
+      padding-bottom: 0.9rem;
+      border-bottom: 2px solid var(--foreground);
+      font-size: clamp(1.8rem, 4vw, 2.55rem);
+      line-height: 1.28;
+      letter-spacing: -0.035em;
+    }
+
+    .document h3 {
+      margin: 3rem 0 1rem;
+      font-size: 1.55rem;
+      line-height: 1.4;
+      letter-spacing: -0.025em;
+    }
+
+    .document h4 {
+      margin: 2.25rem 0 0.8rem;
+      font-size: 1.18rem;
+      line-height: 1.45;
+    }
+
+    .document p,
+    .document li {
+      color: #334155;
+      font-size: 1.06rem;
+      line-height: 1.9;
+    }
+
+    .document p { margin: 0.85rem 0; }
+
+    .document ul,
+    .document ol {
+      margin: 1rem 0;
+      padding-left: 1.5rem;
+    }
+
+    .document li + li { margin-top: 0.45rem; }
+
+    .document strong { color: var(--foreground); }
+
+    .document :not(pre) > code {
+      padding: 0.16rem 0.36rem;
+      border: 1px solid var(--border);
+      border-radius: 0.35rem;
+      background: var(--muted);
+      color: #be123c;
+      font-family: Consolas, "SFMono-Regular", Menlo, monospace;
+      font-size: 0.92em;
+      word-break: break-word;
+    }
+
+    .code-block {
+      position: relative;
+      margin: 1.35rem 0;
+    }
+
+    .code-label {
+      position: absolute;
+      top: 0.72rem;
+      right: 0.85rem;
+      z-index: 1;
+      color: #94a3b8;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .document pre {
+      overflow-x: auto;
+      margin: 0;
+      padding: 2.7rem 1.2rem 1.2rem;
+      border: 1px solid #1e293b;
+      border-radius: 0.8rem;
+      background: var(--code-background);
+      color: var(--code-foreground);
+      font-family: Consolas, "SFMono-Regular", Menlo, monospace;
+      font-size: 0.94rem;
+      line-height: 1.7;
+      tab-size: 4;
+    }
+
+    .document hr {
+      margin: 3.5rem 0;
+      border: 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .back-to-top {
+      position: fixed;
+      right: 1.25rem;
+      bottom: 1.25rem;
+      width: 2.8rem;
+      height: 2.8rem;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--foreground);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+    }
+
+    .site-footer {
+      padding: 0 1rem 3rem;
+      color: var(--muted-foreground);
+      text-align: center;
+      font-size: 0.88rem;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 3px;
+    }
+
+    @media (max-width: 700px) {
+      .header-inner,
+      .page-shell { width: min(100% - 1.25rem, 72rem); }
+
+      .brand-text { display: none; }
+      .page-shell { padding-top: 1.25rem; }
+      .toc-heading { align-items: start; flex-direction: column; }
+      .toc ol { grid-template-columns: 1fr; }
+      .document-inner { width: 100%; }
+      .document-inner > section,
+      .document-inner > nav { padding: 1.25rem; }
+      .document .chapter { margin-top: 0; }
+      .document pre { font-size: 0.86rem; }
+      .gif-grid { grid-template-columns: 1fr; }
+      .writing-flow { grid-template-columns: 1fr; }
+      .writing-step + .writing-step::before {
+        content: "↓";
+        top: -0.72rem;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .toc a { transition: none; }
+    }
+  </style>
+</head>
+
+<body id="top">
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="../index.html#home-section" aria-label="포트폴리오 홈으로 이동">
+        <span class="brand-mark" aria-hidden="true">U</span>
+        <span class="brand-text">maibong</span>
+      </a>
+
+      <a class="back-link" href="../index.html#projects-section">
+        <span aria-hidden="true">←</span>
+        Projects로 돌아가기
+      </a>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow">Technical Portfolio · Unreal Engine 5.6</p>
+      <h1 id="page-title">Technical Specifications</h1>
+      <p class="hero-copy">
+        플레이어 상태 관리, 인터페이스 기반 아이템 상호작용, 아이템과 <br>
+        플레이어 성장 시스템의 설계 과정과 기술적 판단을 정리했습니다.
+      </p>
+
+      <div class="tags" aria-label="사용 기술">
+        <span class="tag">Unreal Engine 5.6</span>
+        <span class="tag">C++</span>
+      </div>
+    </section>
+
+    <article class="document" aria-label="Shooting Action Game 기술 구현 상세">
+      <div class="document-inner">
+<section class="media-showcase" id="gameplay-showcase" aria-labelledby="gameplay-showcase-title">
+        <blockquote class="lead-quote"><p><strong><h2>상세설명서</h2></strong>  <br>
+          담당 구현: <strong>플레이어 상태 관리</strong>, <strong>인터페이스 기반 아이템 상호작용</strong>, <strong>아이템과 플레이어 성장 시스템 연결</strong></p></blockquote>
+<p>플레이어가 지상 이동, 조준, 비행, 부스트 등 서로 다른 행동 상태를 안정적으로 전환하고, <br> 
+  월드에 배치된 다양한 아이템을 하나의 상호작용 방식으로 사용할 수 있도록 시스템을 구성했습니다.<br> <br>
+또한 아이템 획득 결과가 단순한 오브젝트 제거에서 끝나지 않고 <code>PlayerState</code>, <code>InventoryComponent</code>, <br> <code>PlayerStatsComponent</code>, <code>SaveGame</code>으로 이어져 실제 플레이어의 능력과 장비, 스탯에 반영되도록 구현했습니다.</p>
+<hr>
+  <div class="media-showcase-header">
+    <h2 id="gameplay-showcase-title">게임플레이 구현</h2>
+    <p>전투와 플레이어 능력의 실제 동작을 GIF로 정리했습니다.</p>
+  </div>
+
+  <div class="gif-group">
+    <h3 class="gif-group-title">전투 시스템</h3>
+    <div class="gif-grid">
+      <figure class="gif-card">
+        <img src="../gif/CombatWithMelee.gif" alt="근접 무기를 사용해 적과 전투하는 장면" width="426" height="240" loading="lazy" decoding="async">
+        <figcaption>근/원거리형 적 전투 I</figcaption>
+      </figure>
+
+      <figure class="gif-card">
+        <img src="../gif/CombatWithMelee2.gif" alt="다른 상황에서 근접 무기를 사용해 전투하는 장면" width="426" height="240" loading="lazy" decoding="async">
+        <figcaption>근/원거리형 적 전투 II</figcaption>
+      </figure>
+
+      <figure class="gif-card">
+        <img src="../gif/CombatWithRanged.gif" alt="원거리 무기를 조준하고 적과 전투하는 장면" width="426" height="240" loading="lazy" decoding="async">
+        <figcaption>저격형 적과의 전투</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="gif-group">
+    <h3 class="gif-group-title">플레이어 이동 및 특수 능력</h3>
+    <div class="gif-grid">
+      <figure class="gif-card">
+        <img src="../gif/Dash.gif" alt="플레이어가 이동 방향으로 대시하는 장면" width="426" height="240" loading="lazy" decoding="async">
+        <figcaption>대시</figcaption>
+      </figure>
+
+      <figure class="gif-card">
+        <img src="../gif/Dash%26Aim.gif" alt="플레이어가 대시 후 조준 동작으로 전환하는 장면" width="426" height="240" loading="lazy" decoding="async">
+        <figcaption>스프린트 &amp; 조준</figcaption>
+      </figure>
+
+      <figure class="gif-card">
+        <img src="../gif/Flying.gif" alt="플레이어가 비행 능력을 사용하는 장면" width="426" height="240" loading="lazy" decoding="async">
+        <figcaption>비행</figcaption>
+      </figure>
+
+      <figure class="gif-card">
+        <img src="../gif/Shield.gif" alt="플레이어가 실드 능력을 사용하는 장면" width="426" height="240" loading="lazy" decoding="async">
+        <figcaption>실드</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+<section class="chapter" id="system-summary">
+<h2>전체 시스템 요약</h2>
+<p>세 기능은 독립적으로 동작하는 것이 아니라 하나의 플레이 흐름으로 연결됩니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>[Player State System]
+현재 플레이어 행동을 상태 객체로 관리
+        │
+        │ 능력 사용 전 해금 여부 확인
+        ▼
+[Player Growth System]
+PlayerState가 능력 / 무기 / 파츠 해금 정보 관리
+        ▲
+        │ 아이템 획득 결과 전달
+        │
+[Interaction System]
+IU_Interactable을 통해 다양한 Item과 동일한 방식으로 상호작용</code></pre></div>
+<p>실제 게임에서는 다음과 같은 하나의 흐름이 만들어집니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>플레이어가 아이템에 접근
+        ↓
+IU_Interactable 대상으로 등록
+        ↓
+상호작용 입력
+        ↓
+아이템의 Interact() 실행
+        ↓
+PlayerState에 능력 / 장비 해금
+        ↓
+Inventory / Stats 갱신
+        ↓
+새로운 플레이어 행동 사용 가능
+        ↓
+상태 시스템을 통해 해당 행동 실행
+        ↓
+SaveGame에 진행 상태 저장</code></pre></div>
+<h3 id="담당-구현-핵심-요약">담당 구현 핵심 요약</h3>
+<ul>
+<li><strong>플레이어 상태 관리</strong></li>
+</ul>
+<p><code>UCharacterStateBase</code>의 <code>Enter / Tick / Exit</code>를 기반으로 이동, 조준, 비행, 부스트 등 플레이어의 복합 행동을 상태 단위로 분리했습니다.</p>
+<ul>
+<li><strong>인터페이스 기반 아이템 상호작용</strong></li>
+</ul>
+<p><code>IU_Interactable</code>을 이용해 Player가 아이템의 구체적인 클래스에 의존하지 않고 공통 <code>Interact()</code> 호출로 다양한 오브젝트와 상호작용하도록 구현했습니다.</p>
+<ul>
+<li><strong>아이템과 플레이어 성장 연결</strong></li>
+</ul>
+<p>아이템 획득 결과를 <code>PlayerState → InventoryComponent → PlayerStatsComponent → Character Component</code>로 전달하여 능력 해금, 장비 장착, 스탯 적용, 저장까지 하나의 성장 흐름으로 연결했습니다.</p>
+</section>
+<nav class="toc" aria-labelledby="toc-title">
+  <div class="toc-heading">
+    <h1 id="toc-title">목차</h1>
+    <p>보고 싶은 기술 구현 내용을 선택하세요.</p>
+  </div>
+
+  <div class="toc-writing-guide" aria-label="각 기술 내용의 공통 작성 구조">
+    <p class="writing-guide-copy"><strong>공통 작성 구조</strong> — 모든 기술 항목은 문제를 정의한 뒤 해결 기준을 세우고, 설계와 실제 구현을 거쳐 결과와 개선 방향을 정리하는 순서로 작성했습니다.</p>
+    <div class="writing-flow">
+      <div class="writing-step">
+        <strong>문제</strong>
+        <span>해결할 한계와 복잡성 정의</span>
+      </div>
+      <div class="writing-step">
+        <strong>목표</strong>
+        <span>개선 기준과 설계 원칙 설정</span>
+      </div>
+      <div class="writing-step">
+        <strong>설계</strong>
+        <span>클래스 책임과 데이터 흐름 구성</span>
+      </div>
+      <div class="writing-step">
+        <strong>구현</strong>
+        <span>코드와 실행 순서 제시</span>
+      </div>
+      <div class="writing-step">
+        <strong>결과</strong>
+        <span>적용 효과와 확장성 정리</span>
+      </div>
+      <div class="writing-step">
+        <strong>개선점</strong>
+        <span>남은 위험과 다음 방향 제안</span>
+      </div>
+    </div>
+  </div>
+
+  <ol>
+    <li>
+      <a href="#player-state">
+        <span class="toc-number">01</span>
+        <span class="toc-item-title">플레이어 상태 관리</span>
+      </a>
+    </li>
+    <li>
+      <a href="#interaction-system">
+        <span class="toc-number">02</span>
+        <span class="toc-item-title">인터페이스 기반 아이템 상호작용</span>
+      </a>
+    </li>
+    <li>
+      <a href="#growth-system">
+        <span class="toc-number">03</span>
+        <span class="toc-item-title">아이템과 플레이어 성장 시스템</span>
+      </a>
+    </li>
+  </ol>
+</nav>
+<section class="chapter" id="player-state">
+<h2>1. 플레이어 상태 관리</h2>
+<h3 id="문제">문제</h3>
+<p>플레이어가 사용할 수 있는 행동이 많아질수록 하나의 Character 클래스에서 모든 상태를 <code>if</code> / <code>switch</code> 문과 Boolean 변수만으로 관리하면 로직 간 의존성이 빠르게 증가합니다.</p>
+<p>이 프로젝트의 플레이어는 단순 이동뿐 아니라 다음과 같은 서로 다른 행동을 가집니다.</p>
+<ul>
+<li>일반 이동</li>
+<li>조준</li>
+<li>차지 공격</li>
+<li>비행</li>
+<li>부스트</li>
+<li>비행 중 조준</li>
+<li>비행 중 차지</li>
+</ul>
+<p>특히 각 행동마다 <code>CharacterMovementComponent</code>의 이동 모드, 중력, 회전 방식, 카메라 설정, 연료 소비 방식 등이 달라지기 때문에 상태 전환 처리를 한 클래스에 계속 추가할 경우 다음과 같은 문제가 발생할 수 있었습니다.</p>
+<ul>
+<li>새로운 행동 추가 시 기존 행동의 조건문까지 수정해야 함</li>
+<li>상태 진입과 종료 시 변경했던 설정을 원래 값으로 복구하기 어려움</li>
+<li>비행, 조준, 부스트처럼 서로 영향을 주는 행동 사이에서 상태 충돌이 발생할 수 있음</li>
+<li>하나의 함수가 입력 처리, 상태 검사, Movement 설정 변경까지 모두 담당하게 되어 코드 가독성이 저하됨</li>
+</ul>
+<hr>
+<h3 id="목표">목표</h3>
+<p>플레이어가 현재 수행 중인 행동을 명확한 <strong>상태(State)</strong> 로 관리하고, 각 상태가 자신의 진입·유지·종료 로직을 담당하도록 구성하는 것을 목표로 했습니다.</p>
+<p>구체적으로 다음을 기준으로 설계했습니다.</p>
+<ol>
+<li>플레이어의 현재 행동을 하나의 <code>ECharacterState</code> 값으로 식별할 것</li>
+<li>각 상태마다 독립적인 객체를 두어 상태별 로직을 분리할 것</li>
+<li>상태가 변경될 때 이전 상태의 종료 처리와 새로운 상태의 진입 처리를 일관된 순서로 실행할 것</li>
+<li>매 프레임 필요한 로직은 현재 활성화된 상태 객체만 처리할 것</li>
+<li>이후 새로운 플레이어 행동이 추가되더라도 기존 상태의 수정 범위를 최소화할 것</li>
+</ol>
+<hr>
+<h3 id="설계">설계</h3>
+<p>플레이어 상태를 다음과 같은 Enum으로 정의했습니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>UENUM(BlueprintType)
+enum class ECharacterState : uint8
+{
+    Locomotion,
+    Aiming,
+    Charging,
+    Flying,
+    Boosting,
+    FlyAim,
+    FlyCharge
+};</code></pre></div>
+<p>각 상태의 공통 동작을 정의하기 위해 <code>UCharacterStateBase</code>를 만들고, 상태 객체가 다음 세 가지 생명주기를 가질 수 있도록 구성했습니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>class UCharacterStateBase : public UObject
+{
+public:
+    virtual void Enter(ASpaceCharacter* Character);
+    virtual void Tick(ASpaceCharacter* Character, float DeltaTime);
+    virtual void Exit(ASpaceCharacter* Character);
+};</code></pre></div>
+<p><code>ASpaceCharacter</code>는 상태별 객체를 <code>TMap</code>으로 관리합니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>TMap&lt;ECharacterState, UCharacterStateBase*&gt; StateMap;
+
+UCharacterStateBase* CurrentStateObject;
+ECharacterState CurrentState;</code></pre></div>
+<p>게임 시작 시 각 상태 객체를 생성하여 등록했습니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>StateMap.Add(ECharacterState::Locomotion, NewObject&lt;US_Idle&gt;(this));
+StateMap.Add(ECharacterState::Aiming, NewObject&lt;US_Aim&gt;(this));
+StateMap.Add(ECharacterState::Flying, NewObject&lt;US_Fly&gt;(this));
+StateMap.Add(ECharacterState::Boosting, NewObject&lt;US_Boost&gt;(this));</code></pre></div>
+<h4 id="상태-구조">상태 구조</h4>
+<div class="code-block"><span class="code-label">text</span><pre><code>Enhanced Input
+      ↓
+ASpaceCharacter
+      ↓
+현재 행동과 사용 조건 확인
+      ↓
+ChangeState(NewState)
+      ↓
+┌───────────────────────────────┐
+│ CurrentStateObject -&gt; Exit()  │
+│ CurrentState 변경             │
+│ NewStateObject -&gt; Enter()     │
+└───────────────────────────────┘
+      ↓
+매 Tick에서 현재 State만 Tick()</code></pre></div>
+<p>이 구조에서 <code>ASpaceCharacter</code>는 <strong>어떤 상태로 전환할지 결정하는 역할</strong>을 담당하고, 실제 상태별 설정은 <code>US_Aim</code>, <code>US_Fly</code>, <code>US_Boost</code> 등의 객체가 담당하도록 책임을 분리했습니다.</p>
+<hr>
+<h3 id="구현">구현</h3>
+<h4 id="1-상태-전환을-하나의-함수로-통일">1) 상태 전환을 하나의 함수로 통일</h4>
+<p>상태가 변경될 때 기존 상태의 <code>Exit()</code>를 먼저 실행하고, 새 상태의 <code>Enter()</code>를 호출하도록 구현했습니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>void ASpaceCharacter::ChangeState(ECharacterState NewState)
+{
+    if (CurrentState == NewState)
+        return;
+
+    if (CurrentStateObject)
+        CurrentStateObject-&gt;Exit(this);
+
+    CurrentState = NewState;
+
+    if (StateMap.Contains(NewState))
+    {
+        CurrentStateObject = StateMap[NewState];
+        CurrentStateObject-&gt;Enter(this);
+    }
+}</code></pre></div>
+<p>이를 통해 상태마다 변경했던 Movement 또는 Camera 관련 설정을 종료 시점에 다시 복구할 수 있도록 했습니다.</p>
+<h4 id="2-현재-상태만-tick-처리">2) 현재 상태만 Tick 처리</h4>
+<p><code>ASpaceCharacter::Tick()</code>에서는 현재 활성화된 상태 객체만 업데이트합니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>if (CurrentStateObject)
+{
+    CurrentStateObject-&gt;Tick(this, DeltaTime);
+}</code></pre></div>
+<p>따라서 비행 중 연료 소비, 조준 중 카메라 전환처럼 <strong>특정 상태에서만 필요한 연산</strong>을 해당 상태 객체에 배치할 수 있습니다.</p>
+<h4 id="3-비행-상태">3) 비행 상태</h4>
+<p>비행 상태 진입 시 <code>CharacterMovementComponent</code>를 비행에 맞게 변경했습니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>Flying 상태 진입
+    ↓
+MOVE_Flying으로 변경
+    ↓
+GravityScale 감소
+    ↓
+AirControl / Braking 설정 변경
+    ↓
+날개 애니메이션 실행
+    ↓
+매 Tick마다 연료 소비
+    ↓
+연료 부족 시 Locomotion으로 전환</code></pre></div>
+<p><code>US_Fly::Tick()</code>에서는 연료를 지속적으로 소비하며, 더 이상 비행할 수 없는 경우 자동으로 일반 이동 상태로 복귀하도록 했습니다.</p>
+<h4 id="4-조준-상태">4) 조준 상태</h4>
+<p>조준 상태에서는 이동 방향이 아닌 컨트롤러 방향을 바라보도록 회전 방식을 변경하고 카메라 전환을 시작합니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>Aiming Enter
+    ↓
+bOrientRotationToMovement = false
+bUseControllerRotationYaw = true
+    ↓
+조준용 카메라 위치로 보간</code></pre></div>
+<p>상태 종료 시에는 다시 일반 이동용 회전 방식으로 복구합니다.</p>
+<h4 id="5-부스트-상태">5) 부스트 상태</h4>
+<p>부스트는 입력 방향을 기준으로 순간적인 Impulse를 적용하고, 일정 시간이 지나면 상태를 종료하도록 구현했습니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>Boost 입력
+    ↓
+능력 사용 가능 여부 확인
+    ↓
+공중 또는 비행 상태인지 검사
+    ↓
+Boosting 상태 진입
+    ↓
+입력 방향으로 Impulse 적용
+    ↓
+연료 소비 + 애니메이션
+    ↓
+BoostDuration 경과
+    ↓
+Locomotion 상태로 전환</code></pre></div>
+<hr>
+<h3 id="결과">결과</h3>
+<p>플레이어의 행동을 상태 단위로 분리하여 <strong>행동 전환과 상태별 설정을 한 곳에서 관리하는 구조</strong>를 만들었습니다.</p>
+<p>이를 통해 다음과 같은 효과를 얻었습니다.</p>
+<ul>
+<li>상태마다 필요한 Movement, Camera, Fuel 로직을 별도 클래스로 분리</li>
+<li>상태 진입과 종료 시점을 명확하게 구분하여 설정 복구 과정을 관리</li>
+<li>비행 중 연료 부족과 같이 상태 내부에서 발생하는 조건에 따라 다른 상태로 전환 가능</li>
+<li>플레이어 Character 클래스에 모든 행동의 세부 구현을 집중시키는 것을 방지</li>
+<li>새로운 행동을 추가할 때 <code>UCharacterStateBase</code>를 상속한 상태 클래스를 추가하는 방향으로 확장 가능</li>
+</ul>
+<p>단순히 플레이어의 현재 상태를 저장하는 것이 아니라, <strong>상태 자체가 동작을 가지도록 구성했다는 점</strong>에 중점을 두었습니다.</p>
+<blockquote class="lead-quote"><p><strong>핵심 구현 포인트</strong>  <br>플레이어 행동을 Enum으로만 구분하지 않고 상태 객체의 <code>Enter / Tick / Exit</code> 생명주기로 분리하여, 각 행동이 요구하는 설정과 해제 로직을 독립적으로 관리했습니다.</p></blockquote>
+<hr>
+<h3 id="개선점">개선점</h3>
+<p>현재 구조에서는 <code>CurrentState</code>와 함께 <code>bIsAiming</code>, <code>bIsFlyingMode</code>, <code>bIsBoosting</code> 등의 Boolean 값도 일부 상태 판단에 사용하고 있습니다.</p>
+<p>따라서 장기적으로는 <strong>현재 상태를 판단하는 기준을 하나의 진실상태로 통합</strong>하여 상태 값과 Boolean 값이 서로 불일치할 가능성을 줄일 수 있습니다.</p>
+<p>또한 현재 일부 입력 로직은 <code>ASpaceCharacter</code>가 직접 처리하고 있으므로, 규모가 더 커질 경우 상태 객체의 <code>HandleMove</code>, <code>HandleAim</code>, <code>HandleBoost</code> 등의 인터페이스를 적극적으로 활용하여 <strong>현재 상태가 입력에 어떻게 반응할지까지 상태 객체에 위임</strong>하는 방향으로 확장할 수 있습니다.</p>
+<p>추가 개선 방향은 다음과 같습니다.</p>
+<ul>
+<li><code>SetState()</code>와 <code>ChangeState()</code>의 역할을 하나로 통합</li>
+<li>상태 간 전환 가능 여부를 Transition Rule로 명시</li>
+<li><code>Flying → Boosting → Flying</code>처럼 이전 상태 복귀가 필요한 행동의 전환 정책 개선</li>
+<li>상태 Debug UI를 추가하여 런타임에서 현재 상태와 전환 과정을 확인</li>
+<li>상태별 자동화 테스트를 작성해 잘못된 상태 조합을 검증</li>
+</ul>
+<hr>
+</section>
+<section class="chapter" id="interaction-system">
+<h2>2. 인터페이스 기반 아이템 상호작용</h2>
+<h3 id="문제-2">문제</h3>
+<p>게임 월드에는 서로 다른 기능을 수행하는 여러 상호작용 오브젝트가 존재합니다.</p>
+<p>이 프로젝트에서는 대표적으로 다음 아이템을 구현했습니다.</p>
+<ul>
+<li>능력 해금 아이템</li>
+<li>무기 해금 아이템</li>
+<li>파츠 해금 아이템</li>
+<li>체크포인트 / 회복 오브젝트</li>
+</ul>
+<p>각 오브젝트의 실제 동작은 서로 다르지만 플레이어 입장에서는 모두 <strong>&quot;가까이 접근한 뒤 상호작용 키를 누른다&quot;</strong>는 동일한 입력 방식을 사용합니다.</p>
+<p>만약 플레이어가 아이템의 실제 클래스를 직접 판별하도록 구현하면 다음과 같은 코드가 필요해집니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>AbilityUnlockItem이면 능력 해금
+WeaponItemBox이면 무기 해금
+PartUnlockItem이면 파츠 해금
+Bonfire이면 회복 및 저장
+...</code></pre></div>
+<p>이 방식은 새로운 상호작용 오브젝트가 추가될 때마다 <code>ASpaceCharacter</code>를 수정해야 하며, Player와 Item 사이의 의존성이 계속 증가하는 문제가 있습니다.</p>
+<hr>
+<h3 id="목표-2">목표</h3>
+<p>플레이어가 상호작용 대상의 구체적인 클래스나 기능을 알지 않아도 <strong>동일한 방식으로 상호작용을 요청</strong>할 수 있는 구조를 만드는 것을 목표로 했습니다.</p>
+<p>설계 목표는 다음과 같습니다.</p>
+<ol>
+<li>플레이어는 현재 대상이 어떤 종류의 아이템인지 판단하지 않을 것</li>
+<li>모든 상호작용 가능 액터가 동일한 인터페이스를 제공할 것</li>
+<li>실제 상호작용 결과는 각 Item 클래스가 직접 결정할 것</li>
+<li>새로운 상호작용 액터를 추가하더라도 Player 코드 변경을 최소화할 것</li>
+<li>Overlap과 UI를 통해 현재 상호작용 가능한 대상을 플레이어에게 전달할 것</li>
+</ol>
+<hr>
+<h3 id="설계-2">설계</h3>
+<p>Unreal Engine의 <code>UInterface</code>를 이용하여 <code>IU_Interactable</code>을 정의했습니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>UINTERFACE(Blueprintable)
+class UU_Interactable : public UInterface
+{
+    GENERATED_BODY()
+};
+
+class IU_Interactable
+{
+    GENERATED_BODY()
+
+public:
+    virtual void Interact(ASpaceCharacter* Character) = 0;
+};</code></pre></div>
+<p>플레이어는 현재 상호작용 대상을 구체 클래스 포인터가 아닌 <code>TScriptInterface</code>로 저장합니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+TScriptInterface&lt;IU_Interactable&gt; CurrentInteractTarget;</code></pre></div>
+<p>따라서 <code>ASpaceCharacter</code>는 대상이 능력 아이템인지, 무기 상자인지, 파츠 상자인지 알 필요가 없습니다.</p>
+<h4 id="상호작용-구조">상호작용 구조</h4>
+<div class="code-block"><span class="code-label">text</span><pre><code>상호작용 가능한 Actor
+        ↓
+IU_Interactable 구현
+        ↓
+Collision Overlap Begin
+        ↓
+Character.CurrentInteractTarget = this
+        ↓
+상호작용 Widget 표시
+        ↓
+Enhanced Input : InteractAction
+        ↓
+ASpaceCharacter::TryInteract()
+        ↓
+CurrentInteractTarget-&gt;Interact(this)
+        ↓
+각 Actor가 자신의 기능 수행</code></pre></div>
+<hr>
+<h3 id="구현-2">구현</h3>
+<h4 id="1-상호작용-대상-등록">1) 상호작용 대상 등록</h4>
+<p>아이템의 <code>CollisionSphere</code>에 플레이어가 진입하면 해당 아이템을 현재 상호작용 대상으로 등록합니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>if (ASpaceCharacter* Character = Cast&lt;ASpaceCharacter&gt;(OtherActor))
+{
+    Character-&gt;CurrentInteractTarget = this;
+
+    if (InteractWidget &amp;&amp; !bActivated)
+        InteractWidget-&gt;SetVisibility(true);
+}</code></pre></div>
+<p>플레이어가 범위를 벗어나면 자신이 현재 대상일 경우에만 포인터를 제거합니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>if (Character-&gt;CurrentInteractTarget == this)
+{
+    Character-&gt;CurrentInteractTarget = nullptr;
+}</code></pre></div>
+<p>이를 통해 월드 공간의 상호작용 UI와 실제 입력 가능 상태를 함께 관리했습니다.</p>
+<h4 id="2-player의-공통-입력-처리">2) Player의 공통 입력 처리</h4>
+<p><code>Enhanced Input</code>의 <code>InteractAction</code>은 플레이어의 <code>TryInteract()</code>에 연결됩니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>EnhancedInput-&gt;BindAction(
+    InteractAction,
+    ETriggerEvent::Started,
+    this,
+    &amp;ASpaceCharacter::TryInteract
+);</code></pre></div>
+<p><code>TryInteract()</code>는 아이템 종류를 확인하지 않고 인터페이스 함수만 호출합니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>void ASpaceCharacter::TryInteract()
+{
+    if (!CurrentInteractTarget)
+        return;
+
+    CurrentInteractTarget-&gt;Interact(this);
+    CurrentInteractTarget = nullptr;
+}</code></pre></div>
+<p>이 부분이 시스템의 핵심입니다.</p>
+<p>Player는 <strong>상호작용 요청만 전달</strong>하고, 요청을 받았을 때 실제로 무엇을 할지는 각 Actor가 결정합니다.</p>
+<h4 id="3-아이템별-기능-분리">3) 아이템별 기능 분리</h4>
+<p>예를 들어 능력 아이템은 다음과 같이 능력 해금을 수행합니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>void AAbilityUnlockItem::Interact(ASpaceCharacter* Character)
+{
+    Character-&gt;UnlockAbility(AbilityToUnlock);
+    bActivated = true;
+
+    USaveSystemManager::SavePawnState(Character);
+}</code></pre></div>
+<p>반면 파츠 아이템은 같은 <code>Interact()</code> 인터페이스를 사용하지만 전혀 다른 로직을 수행합니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>PartUnlockItem::Interact()
+    ↓
+PlayerState에 파츠 해금
+    ↓
+Inventory 슬롯에 파츠 장착
+    ↓
+PlayerStats 갱신
+    ↓
+SaveGame 저장</code></pre></div>
+<p>무기 아이템도 동일한 인터페이스에서 <code>PlayerState::UnlockWeapon()</code>을 호출합니다.</p>
+<p>즉, <strong>입력 방식은 통일하면서 결과는 각 객체에 위임</strong>했습니다.</p>
+<hr>
+<h3 id="결과-2">결과</h3>
+<p>플레이어와 아이템 사이의 직접적인 클래스 의존성을 줄이고, 서로 다른 상호작용 오브젝트를 하나의 입력 흐름으로 처리할 수 있도록 구성했습니다.</p>
+<p>이 구조를 통해 다음과 같은 효과를 얻었습니다.</p>
+<ul>
+<li>Player가 Item의 구체 클래스를 직접 검사하지 않음</li>
+<li>능력, 파츠, 무기처럼 결과가 전혀 다른 오브젝트도 동일한 <code>Interact()</code> 호출로 처리</li>
+<li>새로운 상호작용 액터가 추가되어도 <code>IU_Interactable</code>만 구현하면 기존 Player 입력 구조를 재사용 가능</li>
+<li>상호작용 범위 진입/이탈과 World Space Widget을 연결하여 사용자 피드백 제공</li>
+<li>Item이 자신의 상호작용 결과를 직접 책임지도록 역할을 분리</li>
+</ul>
+<blockquote class="lead-quote"><p><strong>핵심 구현 포인트</strong>  <br>Player가 <code>AbilityUnlockItem</code>, <code>WeaponItemBox</code>, <code>PartUnlockItem</code>과 직접 결합되지 않도록 <code>IU_Interactable</code>을 중간 계약으로 두고, 모든 상호작용을 <code>Interact()</code>라는 공통 메시지로 처리했습니다.</p></blockquote>
+<hr>
+<h3 id="개선점-2">개선점</h3>
+<p>현재 <code>AbilityUnlockItem</code>, <code>PartUnlockItem</code>, <code>WeaponItemBox</code>에는 다음과 같은 공통 로직이 반복되어 있습니다.</p>
+<ul>
+<li><code>CollisionSphere</code></li>
+<li><code>InteractWidget</code></li>
+<li><code>OnOverlapBegin / OnOverlapEnd</code></li>
+<li><code>bActivated</code></li>
+<li>상자 개방 Timeline</li>
+<li>획득 UI</li>
+<li>Niagara Effect</li>
+<li>사용 후 Collision 비활성화</li>
+</ul>
+<p>따라서 다음 단계에서는 <code>AInteractableItemBase</code>와 같은 공통 부모 클래스를 두고, <strong>인터페이스는 상호작용 계약을 담당하고 부모 클래스는 반복되는 기본 구현을 담당하도록 분리</strong>할 수 있습니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>IU_Interactable
+      ↑
+AInteractableItemBase
+      ├─ AbilityUnlockItem
+      ├─ WeaponItemBox
+      └─ PartUnlockItem</code></pre></div>
+<p>또한 현재는 Overlap된 아이템이 <code>CurrentInteractTarget</code>을 직접 덮어쓰는 방식이므로, 여러 아이템의 상호작용 범위가 겹치는 상황에서는 다음과 같은 방식으로 개선할 수 있습니다.</p>
+<ul>
+<li>상호작용 후보 목록 관리</li>
+<li>플레이어와 가장 가까운 대상 선택</li>
+<li>카메라 중앙에 가까운 대상 우선</li>
+<li>마지막으로 바라본 대상에 Focus 부여</li>
+<li><code>OnInteractableFocused / Unfocused</code> 이벤트 분리</li>
+</ul>
+<p>이를 통해 아이템 수가 많아지는 실제 레벨에서도 더 안정적인 상호작용 시스템으로 확장할 수 있습니다.</p>
+<hr>
+</section>
+<section class="chapter" id="growth-system">
+<h2>3. 아이템과 플레이어 성장 시스템 연결</h2>
+<h3 id="문제-3">문제</h3>
+<p>아이템을 획득했을 때 단순히 해당 Actor를 제거하거나 UI만 출력하는 것으로는 플레이어의 성장 시스템이 완성되지 않습니다.</p>
+<p>아이템 획득 결과가 실제 게임플레이에 반영되기 위해서는 다음 시스템들이 연결되어야 합니다.</p>
+<ul>
+<li>플레이어가 특정 능력을 사용할 수 있는지</li>
+<li>어떤 무기와 파츠를 획득했는지</li>
+<li>현재 어떤 파츠를 장착하고 있는지</li>
+<li>장착 파츠가 실제 체력·실드·이동 속도에 어떤 영향을 주는지</li>
+<li>획득한 진행 정보를 저장하고 다음 플레이에서도 복원할 수 있는지</li>
+</ul>
+<p>이 정보들을 모두 <code>ASpaceCharacter</code>에 직접 저장하면 Character가 입력, 전투, 이동, 인벤토리, 진행도까지 모두 책임지게 됩니다.</p>
+<hr>
+<h3 id="목표-3">목표</h3>
+<p>아이템 획득을 다음과 같은 하나의 <strong>성장 데이터 흐름</strong>으로 연결하는 것을 목표로 했습니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>월드 아이템 획득
+      ↓
+PlayerState에 해금 상태 기록
+      ↓
+InventoryComponent에 장비 상태 반영
+      ↓
+PlayerStatsComponent에서 최종 스탯 계산
+      ↓
+Character의 실제 Component에 적용
+      ↓
+SaveGame에 진행 정보 저장</code></pre></div>
+<p>역할별 데이터의 책임을 다음과 같이 나누었습니다.</p>
+<ul>
+<li><code>AMyPlayerState</code>  </li>
+</ul>
+<p>→ 플레이어의 <strong>해금 진행 상태</strong> 관리</p>
+<ul>
+<li><code>UInventoryComponent</code>  </li>
+</ul>
+<p>→ 현재 <strong>장착한 무기와 파츠</strong> 관리</p>
+<ul>
+<li><code>UPlayerStatsComponent</code>  </li>
+</ul>
+<p>→ 장착한 파츠를 기반으로 <strong>최종 스탯 계산</strong></p>
+<ul>
+<li><code>ASpaceCharacter</code>  </li>
+</ul>
+<p>→ 계산된 값을 실제 Movement, Health, Shield, Fuel에 반영하고 능력 입력 실행</p>
+<ul>
+<li><code>USaveSystemManager</code>  </li>
+</ul>
+<p>→ 해금 정보를 <code>SaveGame</code>에 저장 및 복원</p>
+<hr>
+<h3 id="설계-3">설계</h3>
+<h4 id="1-playerstate-영구적인-해금-정보">1) PlayerState — 영구적인 해금 정보</h4>
+<p>능력 상태와 무기·파츠 해금 상태를 <code>AMyPlayerState</code>에서 관리했습니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>USTRUCT(BlueprintType)
+struct FUnlockStatus
+{
+    GENERATED_BODY()
+
+    TSet&lt;FName&gt; UnlockedWeapons;
+    TSet&lt;FName&gt; UnlockedParts;
+};</code></pre></div>
+<p>능력은 각 기능의 사용 가능 여부로 저장했습니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>USTRUCT(BlueprintType)
+struct FAbilityUnlockStatus
+{
+    GENERATED_BODY()
+
+    bool bCanSprint = false;
+    bool bCanDash = false;
+    bool bCanFly = false;
+    bool bCanShield = false;
+    bool bCanBoost = false;
+};</code></pre></div>
+<p><code>ASpaceCharacter</code>가 능력을 실행하기 전에는 <code>PlayerState</code>에 사용 가능 여부를 확인합니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>AMyPlayerState* PS = GetPlayerState&lt;AMyPlayerState&gt;();
+
+if (!PS || !PS-&gt;CanUseAbility(EAbilityType::Flying))
+    return;</code></pre></div>
+<p>따라서 <strong>아이템 획득 여부가 실제 플레이어 입력 가능 여부에 직접 연결</strong>됩니다.</p>
+<h4 id="2-inventorycomponent-장착-상태">2) InventoryComponent — 장착 상태</h4>
+<p>파츠는 <code>Core</code>, <code>Upper</code>, <code>Lower</code> 세 슬롯으로 구분했습니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>UENUM(BlueprintType)
+enum class EPartSlot : uint8
+{
+    Core,
+    Upper,
+    Lower
+};</code></pre></div>
+<p>현재 장착 중인 파츠는 슬롯과 DataTable RowName의 Map으로 관리합니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>TMap&lt;EPartSlot, FName&gt; EquippedParts;</code></pre></div>
+<p>아이템을 획득하면 해금과 장착을 순서대로 수행합니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>PartUnlockItem
+    ↓
+PlayerState::UnlockPart()
+    ↓
+InventoryComponent::EquipPart()
+    ↓
+PlayerStatsComponent::ApplyParts()</code></pre></div>
+<h4 id="3-datatable-기반-파츠-데이터">3) DataTable 기반 파츠 데이터</h4>
+<p>파츠의 능력치는 코드에 직접 작성하지 않고 <code>FPartData</code> 형태로 DataTable에서 관리하도록 구성했습니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>struct FPartData : public FTableRowBase
+{
+    EPartSlot Slot;
+
+    float HealthBonus;
+    float ShieldBonus;
+    float MoveSpeedBonus;
+    float BoostUseBonus;
+    float BoostRegenBonus;
+    float WeightBonus;
+};</code></pre></div>
+<p>따라서 파츠의 밸런스 수치는 C++ 로직을 수정하지 않고 데이터에서 조정할 수 있습니다.</p>
+<hr>
+<h3 id="구현-3">구현</h3>
+<h4 id="1-능력-아이템-능력-사용-가능-상태">1) 능력 아이템 → 능력 사용 가능 상태</h4>
+<p>능력 아이템을 사용하면 다음 흐름으로 처리됩니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>AbilityUnlockItem::Interact()
+      ↓
+ASpaceCharacter::UnlockAbility()
+      ↓
+AMyPlayerState::UnlockAbility()
+      ↓
+FAbilityUnlockStatus 변경
+      ↓
+능력 해금 Animation/UI 출력
+      ↓
+SavePawnState()</code></pre></div>
+<p>이후 플레이어가 Sprint, Dash, Flying, Shield, Boost 입력을 사용하면 각각 <code>CanUseAbility()</code>를 확인합니다.</p>
+<p>예를 들어 비행은 다음과 같습니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>Fly 입력
+    ↓
+CanUseAbility(Flying)
+    ↓
+false → 입력 무시
+true  → 연료 확인
+    ↓
+Flying 상태 진입</code></pre></div>
+<p>즉, <strong>아이템 획득 → 데이터 변경 → 플레이어 행동 해금</strong>의 관계를 구성했습니다.</p>
+<h4 id="2-파츠-아이템-장착-스탯-적용">2) 파츠 아이템 → 장착 → 스탯 적용</h4>
+<p>파츠 아이템 획득 시 <code>PlayerState</code>에 해금 정보를 저장한 뒤 바로 Inventory 슬롯에 장착합니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>PS-&gt;UnlockPart(PartRowName);
+
+if (PS-&gt;Inventory)
+{
+    PS-&gt;Inventory-&gt;EquipPart(Slot, PartRowName);
+}</code></pre></div>
+<p><code>EquipPart()</code>는 장착 정보를 갱신한 후 <code>PlayerStatsComponent::ApplyParts()</code>를 호출합니다.</p>
+<p>스탯 계산 시 기존 장비 보너스가 계속 더해지는 것을 방지하기 위해 먼저 최종 스탯을 기본 스탯으로 초기화하고, 현재 장착된 세 파츠를 다시 계산하도록 구성했습니다.</p>
+<div class="code-block"><span class="code-label">cpp</span><pre><code>FinalStats = BaseStats;</code></pre></div>
+<p>이후 슬롯별 파츠 데이터를 순회합니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>BaseStats
+    ↓
+Core 파츠 데이터 합산
+    ↓
+Upper 파츠 데이터 합산
+    ↓
+Lower 파츠 데이터 합산
+    ↓
+FinalStats</code></pre></div>
+<p>계산이 끝나면 실제 플레이어 컴포넌트에 반영합니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>FinalStats.MoveSpeed
+    → CharacterMovement.MaxWalkSpeed
+
+FinalStats.MaxHealth
+    → HealthComponent.MaxHealth
+
+FinalStats.MaxShield
+    → ShieldComponent.MaxShield
+
+FinalStats.BoostRegen
+    → FuelComponent.RechargeRate</code></pre></div>
+<p>이를 통해 아이템 데이터가 실제 플레이 감각에 영향을 주도록 연결했습니다.</p>
+<h4 id="3-무기-파츠-능력-진행-정보-저장">3) 무기 / 파츠 / 능력 진행 정보 저장</h4>
+<p>아이템 획득 후 <code>USaveSystemManager::SavePawnState()</code>를 호출하여 해금 정보를 SaveGame에 기록합니다.</p>
+<p>저장 대상에는 다음과 같은 정보가 포함됩니다.</p>
+<ul>
+<li>능력 해금 상태</li>
+<li>해금된 무기 목록</li>
+<li>해금된 파츠 목록</li>
+<li>탄약 정보</li>
+<li>체크포인트 위치 및 회전 정보</li>
+</ul>
+<p>로드 시에는 저장된 데이터를 다시 <code>PlayerState</code>에 복원하고, 무기 시스템을 초기화하도록 구성했습니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>SaveGame Load
+    ↓
+PlayerState AbilityStatus 복원
+    ↓
+UnlockedWeapons 복원
+    ↓
+UnlockedParts 복원
+    ↓
+Character Weapon 초기화</code></pre></div>
+<p>따라서 아이템 획득이 한 세션에서 끝나는 이벤트가 아니라 <strong>플레이어 진행 데이터로 유지될 수 있는 기반</strong>을 구성했습니다.</p>
+<hr>
+<h3 id="결과-3">결과</h3>
+<p>아이템 획득과 플레이어의 실제 성장 로직을 분리된 시스템 사이의 데이터 흐름으로 연결했습니다.</p>
+<p>이를 통해 다음과 같은 구조를 만들었습니다.</p>
+<ul>
+<li>능력 아이템 획득 여부가 Sprint / Dash / Flying / Shield / Boost 입력 가능 여부에 반영</li>
+<li>무기와 파츠의 해금 상태를 PlayerState에서 일관되게 관리</li>
+<li>파츠 장착 상태와 파츠 해금 상태를 분리</li>
+<li>DataTable의 파츠 데이터를 읽어 현재 장착 상태에 따라 최종 스탯을 재계산</li>
+<li>계산된 결과를 Movement, Health, Shield, Fuel Component에 실제 적용</li>
+<li>획득한 진행 정보를 SaveGame으로 연결</li>
+</ul>
+<p>특히 하나의 아이템 클래스가 플레이어의 모든 값을 직접 변경하는 방식이 아니라 다음과 같이 역할을 나눈 것이 핵심입니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>Item
+  │  &quot;획득&quot;
+  ▼
+PlayerState
+  │  &quot;무엇을 해금했는가?&quot;
+  ▼
+Inventory
+  │  &quot;무엇을 장착했는가?&quot;
+  ▼
+PlayerStats
+  │  &quot;현재 최종 스탯은 얼마인가?&quot;
+  ▼
+Character Components
+     &quot;게임플레이에 적용&quot;</code></pre></div>
+<blockquote class="lead-quote"><p><strong>핵심 구현 포인트</strong>  <br>아이템의 획득 결과를 <code>PlayerState → Inventory → PlayerStats → Character Component</code>로 전달하여, 진행 데이터와 장비 데이터, 실제 플레이어 능력치를 역할별로 분리했습니다.</p></blockquote>
+<hr>
+<h3 id="개선점-3">개선점</h3>
+<p>현재 성장 시스템은 기능 단위 연결이 완료되어 있지만, 저장과 장비 데이터의 책임을 더 명확하게 정리할 수 있습니다.</p>
+<h4 id="1-savegame-데이터-완전성-개선">1) SaveGame 데이터 완전성 개선</h4>
+<p>현재 저장 구조에서는 능력, 무기, 파츠 해금 정보를 관리하고 있지만 장기적으로는 다음 정보까지 명시적으로 저장하는 구조가 필요합니다.</p>
+<ul>
+<li>현재 장착 중인 Core / Upper / Lower 파츠</li>
+<li>현재 장착 중인 무기</li>
+<li>무기별 개별 탄약 Runtime State</li>
+<li>Boost 능력 해금 상태의 저장/복원 일관성</li>
+<li>플레이어의 체력, 실드, 연료 상태</li>
+</ul>
+<p>이를 하나의 <code>FPlayerProgressData</code> 구조체로 묶으면 Save / Load 시 누락되는 데이터를 줄일 수 있습니다.</p>
+<h4 id="2-inventory와-playerstate의-책임-정리">2) Inventory와 PlayerState의 책임 정리</h4>
+<p>현재 <code>InventoryComponent</code>가 <code>PlayerState</code>에 소유되어 있으므로 장착 가능 여부를 확인할 때도 Owner가 <code>PlayerState</code>라는 사실을 기준으로 접근하도록 정리할 수 있습니다.</p>
+<p>이를 통해 다음 책임을 명확하게 만들 수 있습니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>PlayerState
+    ├─ Unlock Progress
+    └─ Inventory
+          ├─ Equipped Weapon
+          └─ Equipped Parts</code></pre></div>
+<h4 id="3-스탯-계산을-순수-계산과-적용-단계로-분리">3) 스탯 계산을 순수 계산과 적용 단계로 분리</h4>
+<p>현재 <code>ApplyParts()</code>에서 파츠 데이터를 계산한 뒤 Character Component에 즉시 적용합니다.</p>
+<p>규모가 커질 경우 다음과 같이 두 단계로 분리할 수 있습니다.</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>CalculateFinalStats()
+        ↓
+FPlayerStats 반환
+        ↓
+ApplyStatsToCharacter()</code></pre></div>
+<p>이렇게 구성하면 장비 UI에서 &quot;장착하기 전 예상 스탯&quot;을 표시하거나 서버에서 스탯 계산 결과를 검증하는 기능으로 확장하기 쉬워집니다.</p>
+<h4 id="4-gameplay-tag-gameplay-ability-system으로-확장-가능">4) Gameplay Tag / Gameplay Ability System으로 확장 가능</h4>
+<p>능력의 종류가 크게 늘어날 경우 개별 Boolean 필드를 계속 추가하는 대신 Gameplay Tag 또는 GAS의 Ability 부여 방식으로 확장할 수 있습니다.</p>
+<p>현재 구조는 작은 규모에서 명확하게 동작하도록 구성했고, 프로젝트 규모가 커질 경우 <strong>데이터 중심의 Ability 시스템으로 확장 가능한 기반</strong>으로 사용할 수 있습니다.</p>
+<hr>
+</section>
+      </div>
+    </article>
+  </main>
+
+  <a class="back-to-top" href="#top" aria-label="페이지 맨 위로 이동">↑</a>
+
+  <footer class="site-footer">
+    Shooting Action Game · Player &amp; Item System Technical Portfolio
+  </footer>
+</body>
+</html>
