@@ -134,6 +134,22 @@
       line-height: 1.85;
     }
 
+    .hero-responsibility {
+      max-width: 51rem;
+      margin: 1rem 0 0;
+      padding: 0.85rem 1rem;
+      border-left: 4px solid var(--primary);
+      border-radius: 0 0.65rem 0.65rem 0;
+      background: rgba(241, 245, 249, 0.9);
+      color: var(--muted-foreground);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    .hero-responsibility strong {
+      color: var(--foreground);
+    }
+
     .tags {
       display: flex;
       flex-wrap: wrap;
@@ -608,6 +624,10 @@
         플레이어 성장 시스템의 설계 과정과 기술적 판단을 정리했습니다.
       </p>
 
+      <p class="hero-responsibility">
+        담당 구현: <strong>플레이어 상태 관리</strong>, <strong>인터페이스 기반 아이템 상호작용</strong>, <strong>아이템과 플레이어 성장 시스템 연결</strong>
+      </p>
+
       <div class="tags" aria-label="사용 기술">
         <span class="tag">Unreal Engine 5.6</span>
         <span class="tag">C++</span>
@@ -617,12 +637,6 @@
     <article class="document" aria-label="Shooting Action Game 기술 구현 상세">
       <div class="document-inner">
 <section class="media-showcase" id="gameplay-showcase" aria-labelledby="gameplay-showcase-title">
-        <blockquote class="lead-quote"><p><strong><h2>상세설명서</h2></strong>  <br>
-          담당 구현: <strong>플레이어 상태 관리</strong>, <strong>인터페이스 기반 아이템 상호작용</strong>, <strong>아이템과 플레이어 성장 시스템 연결</strong></p></blockquote>
-<p>플레이어가 지상 이동, 조준, 비행, 부스트 등 서로 다른 행동 상태를 안정적으로 전환하고, <br> 
-  월드에 배치된 다양한 아이템을 하나의 상호작용 방식으로 사용할 수 있도록 시스템을 구성했습니다.<br> <br>
-또한 아이템 획득 결과가 단순한 오브젝트 제거에서 끝나지 않고 <code>PlayerState</code>, <code>InventoryComponent</code>, <br> <code>PlayerStatsComponent</code>, <code>SaveGame</code>으로 이어져 실제 플레이어의 능력과 장비, 스탯에 반영되도록 구현했습니다.</p>
-<hr>
   <div class="media-showcase-header">
     <h2 id="gameplay-showcase-title">게임플레이 구현</h2>
     <p>전투와 플레이어 능력의 실제 동작을 GIF로 정리했습니다.</p>
